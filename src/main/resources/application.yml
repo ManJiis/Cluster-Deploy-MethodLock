@@ -1,0 +1,14 @@
+server:
+  port: 8001
+spring:
+  application:
+    name: MethodDistributedLock
+  redis:
+    cluster:
+      nodes:
+        - 192.168.1.106:9001
+        - 192.168.1.106:9002
+        - 192.168.1.106:9003
+        - 192.168.1.106:9004
+        - 192.168.1.106:9005
+        - 192.168.1.106:9006

@@ -7,6 +7,8 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,26 +49,40 @@ public class MethodLockAspect {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
-
+    @Autowired
+    private RedissonClient redissonClient;
 
     @Around("methodLockPointCut()")
     public Object doAroundMethod(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         Method method = ((MethodSignature) proceedingJoinPoint.getSignature()).getMethod();
         MethodDistributedLock taskLock = method.getDeclaredAnnotation(MethodDistributedLock.class);
+
         if (taskLock == null) {
             return proceedingJoinPoint.proceed();
         }
+
         String resource = taskLock.resource();
+
         long expirationTime = taskLock.expirationTime();
+        TimeUnit expirationTimeUnit = taskLock.timeUnit();
+
         String lockKey = "";
         if (StringUtils.hasText(resource)) {
             lockKey = "method_distributedLock:" + resource;
         } else {
             lockKey = "method_distributedLock:" + method.getDeclaringClass().getName() + ":" + method.getName();
         }
+
+        // setIfAbsent 在redis cluster模式下master宕机 数据还没同步到slave 会重复获取锁
+//        Boolean locked = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "lock", expirationTime, taskLock.timeUnit());
+
+        // 使用redisson
+        RLock redissonLock = redissonClient.getLock("lockKey");
+
         try {
-            // 单位为秒 默认时间是五分钟
-            Boolean locked = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "lock", expirationTime, taskLock.timeUnit());
+
+            boolean locked = redissonLock.tryLock(expirationTime, expirationTimeUnit);
+
             log.info("-------------------------------------------------------------------------------");
             log.info("实例IP: [{}] 获取锁结果: [{}] ,lockKey: [{}] , 设置超时时间为：{} 秒", getServerIp(), locked, lockKey, expirationTime);
             // 获得锁
@@ -95,8 +111,12 @@ public class MethodLockAspect {
             log.error("获取锁异常: {}", e.getMessage());
             return null;
         } finally {
+
             // 释放锁
-            stringRedisTemplate.delete(lockKey);
+//            stringRedisTemplate.delete(lockKey);
+
+            redissonLock.unlock();
+
             log.info("释放锁: {}", lockKey);
         }
     }
