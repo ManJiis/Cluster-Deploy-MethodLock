@@ -10,9 +10,9 @@
     </parent>
 
     <groupId>top.b0x0</groupId>
-    <artifactId>MethodDistributedLock</artifactId>
+    <artifactId>Cluster-Deploy-MethodLock</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>MethodDistributedLock</name>
+    <name>Cluster-Deploy-MethodLock</name>
 
     <description>Demo project for Spring Boot</description>
     <properties>

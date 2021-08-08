@@ -22,11 +22,11 @@ public @interface MethodDistributedLock {
     String resource() default "";
 
     /**
-     * 锁过期时间 默认5分钟
+     * 锁过期时间 默认1分钟
      *
      * @return /
      */
-    long expirationTime() default 5 * 60L;
+    long expirationTime() default 60L;
 
     /**
      * 时间单位 默认秒

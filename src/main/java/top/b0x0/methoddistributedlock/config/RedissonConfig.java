@@ -5,6 +5,9 @@ import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+
+import java.io.IOException;
 
 /**
  * redisson config
@@ -16,9 +19,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RedissonConfig {
 
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         Config config = new Config();
+        //集群模式,集群节点的地址须使用“redis://”前缀，否则将会报错。
+        //此例集群为3主3从
+/*
         config.useClusterServers()
                 .setScanInterval(2000)
                 .addNodeAddress(
@@ -28,8 +34,13 @@ public class RedissonConfig {
                         , "redis://192.168.1.106:9004"
                         , "redis://192.168.1.106:9005"
                         , "redis://192.168.1.106:9006");
+*/
 
-//        config = Config.fromYAML(new File("config-file.yaml"));
+        try {
+            config = Config.fromYAML(new ClassPathResource("redisson-cluster.yml").getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         return Redisson.create(config);
     }

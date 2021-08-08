@@ -77,12 +77,10 @@ public class MethodLockAspect {
 //        Boolean locked = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "lock", expirationTime, taskLock.timeUnit());
 
         // 使用redisson
-        RLock redissonLock = redissonClient.getLock("lockKey");
+        RLock redissonLock = redissonClient.getLock(lockKey);
 
         try {
-
-            boolean locked = redissonLock.tryLock(expirationTime, expirationTimeUnit);
-
+            boolean locked = redissonLock.tryLock();
             log.info("-------------------------------------------------------------------------------");
             log.info("实例IP: [{}] 获取锁结果: [{}] ,lockKey: [{}] , 设置超时时间为：{} 秒", getServerIp(), locked, lockKey, expirationTime);
             // 获得锁
