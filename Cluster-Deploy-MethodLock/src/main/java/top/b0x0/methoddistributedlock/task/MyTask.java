@@ -16,7 +16,7 @@ import top.b0x0.methoddistributedlock.annotion.MethodDistributedLock;
 public class MyTask {
     private static final Logger log = LoggerFactory.getLogger(MyTask.class);
 
-    @Scheduled(cron = "0/1 * * * * ?")
+//    @Scheduled(cron = "0/1 * * * * ?")
     @MethodDistributedLock()
     public void testTask() throws InterruptedException {
         Thread.sleep(30000);

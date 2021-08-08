@@ -22,6 +22,9 @@ public class RedissonConfig {
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         Config config = new Config();
+        config.useSingleServer()
+                .setAddress("redis://127.0.0.1:6379");
+
         //集群模式,集群节点的地址须使用“redis://”前缀，否则将会报错。
         //此例集群为3主3从
 /*
@@ -36,11 +39,13 @@ public class RedissonConfig {
                         , "redis://192.168.1.106:9006");
 */
 
+/*
         try {
             config = Config.fromYAML(new ClassPathResource("redisson-cluster.yml").getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
+*/
 
         return Redisson.create(config);
     }
