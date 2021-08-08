@@ -74,13 +74,16 @@ public class MethodLockAspect {
         }
 
         // setIfAbsent 在redis cluster模式下master宕机 数据还没同步到slave 会重复获取锁
-//        Boolean locked = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "lock", expirationTime, taskLock.timeUnit());
+//        Boolean locked = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "lock", expirationTime, expirationTimeUnit);
 
         // 使用redisson
         RLock redissonLock = redissonClient.getLock(lockKey);
 
         try {
-            boolean locked = redissonLock.tryLock();
+            // 设置锁的有效时间
+            redissonLock.lock(expirationTime, expirationTimeUnit);
+            // 检查当前线程是否获得此锁
+            boolean locked = redissonLock.isHeldByCurrentThread();
             log.info("-------------------------------------------------------------------------------");
             log.info("实例IP: [{}] 获取锁结果: [{}] ,lockKey: [{}] , 设置超时时间为：{} 秒", getServerIp(), locked, lockKey, expirationTime);
             // 获得锁
@@ -97,7 +100,7 @@ public class MethodLockAspect {
                     return obj;
                 });
                 // 超时处理
-                return future.get(expirationTime, taskLock.timeUnit());
+                return future.get(expirationTime, expirationTimeUnit);
             } else {
                 log.info("任务已经被其它实例执行，本实例跳过执行：{}", lockKey);
                 return null;
